@@ -180,3 +180,6 @@ MonoBehaviour:
   loopCount: 10
   maximumStretchIterations: 2
   grabSpeed: 1
+  grab: 0
+  itemToGrab: {fileID: 0}
+  edgeSectionMaxDist: 0.1

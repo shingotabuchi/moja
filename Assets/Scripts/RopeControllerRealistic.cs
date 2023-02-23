@@ -37,6 +37,10 @@ public class RopeControllerRealistic : MonoBehaviour
 
     public float grabSpeed;
 
+    public bool grab;
+    public Transform itemToGrab;
+
+    public float edgeSectionMaxDist;
 
     void Start() 
 	{
@@ -151,9 +155,9 @@ public class RopeControllerRealistic : MonoBehaviour
         List<Vector2> accelerations = CalculateAccelerations(allRopeSections);
 
         List<RopeSection> nextPosVelForwardEuler = new List<RopeSection>();
-
+        nextPosVelForwardEuler.Add(allRopeSections[0]);
         //Loop through all line segments (except the last because it's always connected to something)
-        for (int i = 0; i < allRopeSections.Count - 1; i++)
+        for (int i = 1; i < allRopeSections.Count - 1; i++)
         {
             RopeSection thisRopeSection = RopeSection.zero;
 
@@ -179,9 +183,9 @@ public class RopeControllerRealistic : MonoBehaviour
         List<Vector2> accelerationFromEuler = CalculateAccelerations(nextPosVelForwardEuler);
 
         List<RopeSection> nextPosVelHeunsMethod = new List<RopeSection>();
-
+        nextPosVelHeunsMethod.Add(allRopeSections[0]);
         //Loop through all line segments (except the last because it's always connected to something)
-        for (int i = 0; i < allRopeSections.Count - 1; i++)
+        for (int i = 1; i < allRopeSections.Count - 1; i++)
         {
             RopeSection thisRopeSection = RopeSection.zero;
 
@@ -202,7 +206,7 @@ public class RopeControllerRealistic : MonoBehaviour
 
 
         //From the temp list to the main list
-        for (int i = 0; i < allRopeSections.Count; i++)
+        for (int i = 1; i < allRopeSections.Count; i++)
         {
             allRopeSections[i] = nextPosVelHeunsMethod[i];
 
@@ -223,7 +227,7 @@ public class RopeControllerRealistic : MonoBehaviour
     private List<Vector2> CalculateAccelerations(List<RopeSection> allRopeSections)
     {
         List<Vector2> accelerations = new List<Vector2>();
-
+        accelerations.Add(Vector2.zero);
         //Spring constant
         float k = springConstant;
         //Damping constant
@@ -236,8 +240,11 @@ public class RopeControllerRealistic : MonoBehaviour
 
         //Calculate all forces once because some sections are using the same force but negative
         List<Vector2> allSpringForces = new List<Vector2>();
+        // allSpringForces.Add(Vector2.zero);
         List<Vector2> allBendingForces = new List<Vector2>();
+        // allBendingForces.Add(Vector2.zero);
         List<float> allBendingAngles = new List<float>();
+        // allBendingAngles.Add(0);
 
         for (int i = 0; i < allRopeSections.Count - 1; i++)
         {
@@ -272,6 +279,7 @@ public class RopeControllerRealistic : MonoBehaviour
                 nextVectorBetween = allRopeSections[i + 2].pos - allRopeSections[i+1].pos;
             }
             float bentAngle = Vector2.SignedAngle(nextVectorBetween,vectorBetween);
+            if(float.IsNaN(bentAngle)) bentAngle = 0;
             float bendForceNorm = bentAngle * bendForceConstant;
             Vector2 bendForceDirection = new Vector2(-dir.y,dir.x);
             Vector2 bendForce = bendForceNorm * bendForceDirection;
@@ -282,7 +290,7 @@ public class RopeControllerRealistic : MonoBehaviour
 
         //Loop through all line segments (except the last because it's always connected to something)
         //and calculate the acceleration
-        for (int i = 0; i < allRopeSections.Count - 1; i++)
+        for (int i = 1; i < allRopeSections.Count - 1; i++)
         {
             Vector2 springForce = Vector2.zero;
             Vector2 bendForce = Vector2.zero;
@@ -344,7 +352,9 @@ public class RopeControllerRealistic : MonoBehaviour
 
         //Loop from the end because it's better to adjust the top section of the rope before the bottom
         //And the top of the rope is at the end of the list
+        
         for (int i = allRopeSections.Count - 1; i > 0; i--)
+        // for (int i = 2; i < allRopeSections.Count; i++)
         {
             RopeSection topSection = allRopeSections[i];
 
