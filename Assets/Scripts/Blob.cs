@@ -15,10 +15,19 @@ public class Blob : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(grab)
+
+        if(Input.GetKeyDown(KeyCode.E))
         {
-            grab = false;
-            StartCoroutine(GetComponent<GeometryTest>().ropes[0].GrabItem(food));
+            if(!grab)
+            {
+                grab = true;
+                StartCoroutine(GetComponent<GeometryTest>().ropes[0].GrabItem(food));
+            }
+            else if(GetComponent<GeometryTest>().ropes[0].whatIsHangingFromTheRope != null)
+            {
+                grab = false;
+                GetComponent<GeometryTest>().ropes[0].whatIsHangingFromTheRope = null;
+            }
         }
     }
 }

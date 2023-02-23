@@ -35,9 +35,10 @@ public class RopeControllerRealistic : MonoBehaviour
     public int loopCount;
     public int maximumStretchIterations = 2;
 
-    public float grabSpeed;
-
-
+    public float grabAcceleration;
+    public bool isGrabbing;
+    public float itemGrabDist;
+    public Transform itemToGrab;
     void Start() 
 	{
         //Init the line renderer we use to display the rope
@@ -78,27 +79,35 @@ public class RopeControllerRealistic : MonoBehaviour
             whatIsHangingFromTheRope.position = allRopeSections[0].pos;
 
             //Make what's hanging from the rope look at the next to last rope position to make it rotate with the rope
-            whatIsHangingFromTheRope.LookAt(allRopeSections[1].pos);
+            // whatIsHangingFromTheRope.LookAt(allRopeSections[1].pos);
+            whatIsHangingFromTheRope.up = (allRopeSections[1].pos - allRopeSections[0].pos).normalized;
         }
         
     }
 
     public IEnumerator GrabItem(Transform item)
     {
-        Vector3 refVel = Vector3.zero;
-        Vector3 ropeEdgePos = (Vector3)allRopeSections[0].pos;
+        itemToGrab = item;
+        // Vector3 refVel = Vector3.zero;
+        // Vector2 ropeEdgePos = allRopeSections[0].pos;
+        isGrabbing = true;
+        // Vector2 velocity = Vector2.zero;
+        // float speed = 0;
         while(true)
         {
-            ropeEdgePos = Vector3.SmoothDamp(ropeEdgePos,item.position,ref refVel,grabSpeed);
-            RopeSection firstRopeSection = allRopeSections[0];
-            firstRopeSection.pos = (Vector2)ropeEdgePos;
-            allRopeSections[0] = firstRopeSection;
-            if(ropeEdgePos == item.position)
+            // speed += grabAcceleration * Time.fixedDeltaTime;
+            // velocity = speed * ((Vector2)item.position - ropeEdgePos).normalized;
+            // ropeEdgePos += velocity * Time.fixedDeltaTime;
+            // RopeSection firstRopeSection = allRopeSections[0];
+            // firstRopeSection.pos = (Vector2)ropeEdgePos;
+            // allRopeSections[0] = firstRopeSection;
+            if((allRopeSections[0].pos-(Vector2)item.position).sqrMagnitude < itemGrabDist*itemGrabDist)
             {
                 whatIsHangingFromTheRope = item;
+                isGrabbing = false;
                 break;
             }
-            yield return null;
+            yield return new WaitForFixedUpdate();
         }
     }
 
@@ -212,10 +221,12 @@ public class RopeControllerRealistic : MonoBehaviour
 
         //Implement maximum stretch to avoid numerical instabilities
         //May need to run the algorithm several times
-
-        for (int i = 0; i < maximumStretchIterations; i++)
+        if(!isGrabbing)
         {
-            ImplementMaximumStretch(allRopeSections);
+            for (int i = 0; i < maximumStretchIterations; i++)
+            {
+                ImplementMaximumStretch(allRopeSections);
+            }
         }
     }
 
@@ -324,6 +335,11 @@ public class RopeControllerRealistic : MonoBehaviour
 
             //Calculate the acceleration a = F / m
             Vector2 acceleration = totalForce / springMass;
+
+            if(i==0 && isGrabbing)
+            {
+                acceleration += ((Vector2)itemToGrab.position - allRopeSections[0].pos).normalized * grabAcceleration;
+            }
 
             accelerations.Add(acceleration);
         }
