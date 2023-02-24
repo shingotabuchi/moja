@@ -39,6 +39,9 @@ public class RopeControllerRealistic : MonoBehaviour
     public bool isGrabbing;
     public float itemGrabDist;
     public Transform itemToGrab;
+
+    float maxChangeDist = Mathf.Infinity;
+    public float maxChangeDistSmall = 0.005f;
     void Start() 
 	{
         //Init the line renderer we use to display the rope
@@ -88,23 +91,16 @@ public class RopeControllerRealistic : MonoBehaviour
     public IEnumerator GrabItem(Transform item)
     {
         itemToGrab = item;
-        // Vector3 refVel = Vector3.zero;
-        // Vector2 ropeEdgePos = allRopeSections[0].pos;
         isGrabbing = true;
-        // Vector2 velocity = Vector2.zero;
-        // float speed = 0;
         while(true)
         {
-            // speed += grabAcceleration * Time.fixedDeltaTime;
-            // velocity = speed * ((Vector2)item.position - ropeEdgePos).normalized;
-            // ropeEdgePos += velocity * Time.fixedDeltaTime;
-            // RopeSection firstRopeSection = allRopeSections[0];
-            // firstRopeSection.pos = (Vector2)ropeEdgePos;
-            // allRopeSections[0] = firstRopeSection;
             if((allRopeSections[0].pos-(Vector2)item.position).sqrMagnitude < itemGrabDist*itemGrabDist)
             {
                 whatIsHangingFromTheRope = item;
                 isGrabbing = false;
+                maxChangeDist = maxChangeDistSmall;
+                yield return new WaitForSeconds(0.5f);
+                maxChangeDist = Mathf.Infinity;
                 break;
             }
             yield return new WaitForFixedUpdate();
@@ -376,6 +372,7 @@ public class RopeControllerRealistic : MonoBehaviour
             {
                 //How far do we need to compress the spring?
                 float compressLength = dist - (ropeSectionLength * maxStretch);
+                if(compressLength > maxChangeDist) compressLength = maxChangeDist;
 
                 //In what direction should we compress the spring?
                 Vector2 compressDir = (topSection.pos - bottomSection.pos).normalized;
@@ -388,6 +385,7 @@ public class RopeControllerRealistic : MonoBehaviour
             {
                 //How far do we need to stretch the spring?
                 float stretchLength = (ropeSectionLength * minStretch) - dist;
+                if(stretchLength > maxChangeDist) stretchLength = maxChangeDist;
 
                 //In what direction should we compress the spring?
                 Vector2 stretchDir = (bottomSection.pos - topSection.pos).normalized;

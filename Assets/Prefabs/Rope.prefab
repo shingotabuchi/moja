@@ -179,6 +179,7 @@ MonoBehaviour:
   bendForceConstant: 0.005
   loopCount: 10
   maximumStretchIterations: 2
-  grabAcceleration: 5
+  grabAcceleration: 50
   isGrabbing: 0
   itemGrabDist: 0.1
+  itemToGrab: {fileID: 0}
