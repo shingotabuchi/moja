@@ -31,7 +31,7 @@ public class GeometryTest : MonoBehaviour
     public float moveDirection;
     public float acceleration;
     public float drag;
-    Vector2 speed;
+    public Vector2 velocity;
     InputMaster controls;
     bool goUp,goDown,goRight,goLeft;
     public int ropeCount;
@@ -77,7 +77,7 @@ public class GeometryTest : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        transform.position += ((Vector3)speed) * Time.deltaTime;
+        transform.position += ((Vector3)velocity) * Time.deltaTime;
 
         Vector2 forceDirection = Vector2.zero;
         float newRotZ = rotationZ;
@@ -90,7 +90,10 @@ public class GeometryTest : MonoBehaviour
         {
             for (int i = 0; i < ropeCount; i++)
             {
-                ropes[i].loopCount = fastLoopCount;
+                if(!ropes[i].isGoingRound && !ropes[i].isGrabbing)
+                {
+                    ropes[i].loopCount = fastLoopCount;
+                }
                 // if(!ropes[i].isGoingRound) ropes[i].loopCount = fastLoopCount;
                 // else ropes[i].loopCount = slowLoopCount;
             }
@@ -100,12 +103,15 @@ public class GeometryTest : MonoBehaviour
         {
             for (int i = 0; i < ropeCount; i++)
             {
-                ropes[i].loopCount = slowLoopCount;
+                if(!ropes[i].isGoingRound && !ropes[i].isGrabbing)
+                {
+                    ropes[i].loopCount = slowLoopCount;
+                }
             }
         }
         rotationZ = Mathf.SmoothDamp(rotationZ, newRotZ, ref rotationVel, rotationTime);
         transform.rotation = Quaternion.Euler(0,0,rotationZ);
-        speed += (forceDirection * acceleration - drag * speed) * Time.deltaTime; 
+        velocity += (forceDirection * acceleration - drag * velocity) * Time.deltaTime; 
 
         for (int i = 1; i < modes; i++)
         {

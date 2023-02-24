@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.0053863553, g: 0.0053863553, b: 0.0053863553, a: 1}
+  m_IndirectSpecularColor: {r: 0.0053901775, g: 0.0053901775, b: 0.0053901775, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -292,6 +292,7 @@ MonoBehaviour:
   moveDirection: 0
   acceleration: 100
   drag: 10
+  velocity: {x: 0, y: 0}
   ropeCount: 1
   ropePrefab: {fileID: 7730913776721567341, guid: 48d4c16aafca1bb4bb9a9b844e717a91, type: 3}
   ropes: []
@@ -445,7 +446,7 @@ Rigidbody2D:
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
   m_Mass: 1
-  m_LinearDrag: 0
+  m_LinearDrag: 0.5
   m_AngularDrag: 0.05
   m_GravityScale: 1
   m_Material: {fileID: 0}

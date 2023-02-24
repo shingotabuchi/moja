@@ -50,6 +50,10 @@ public class RopeControllerRealistic : MonoBehaviour
     public float maxChangeDistSmall = 0.005f;
     bool upperTurn;
     Vector2 turnCenter;
+    public int grabbingLoopCount;
+    public int eatingLoopCount;
+    public float itemThrowForce = 10f;
+    public float itemThrowAngularSpeed = 720f;
     void Start() 
 	{
         //Init the line renderer we use to display the rope
@@ -100,6 +104,7 @@ public class RopeControllerRealistic : MonoBehaviour
     {
         itemToGrab = item;
         isGrabbing = true;
+        loopCount = grabbingLoopCount;
         while(true)
         {
             if((allRopeSections[0].pos-(Vector2)item.position).sqrMagnitude < itemGrabDist*itemGrabDist)
@@ -120,6 +125,7 @@ public class RopeControllerRealistic : MonoBehaviour
     {
         isGoingRound = true;
         upperTurn = false;
+        loopCount = eatingLoopCount;
         if(transform.parent.Find("UpperTurnCenter").position.y < transform.parent.Find("LowerTurnCenter").position.y)
         {
             turnCenter = (Vector2)transform.parent.Find("UpperTurnCenter").position;
@@ -158,7 +164,21 @@ public class RopeControllerRealistic : MonoBehaviour
             float radian = Mathf.Atan2(Vector2.Dot(yVec,vecFromCenter),Vector2.Dot(xVec,vecFromCenter));
             if(radian < 0)radian += 2f * Mathf.PI;
 
-            if(radian > lastRadian) wentToZero = true;
+            if(radian > lastRadian){
+                wentToZero = true;
+                if(whatIsHangingFromTheRope != null)
+                {
+                    Transform item = whatIsHangingFromTheRope;
+                    whatIsHangingFromTheRope = null;
+                    Rigidbody2D body = item.GetComponent<Rigidbody2D>();
+                    body.velocity = transform.parent.GetComponent<GeometryTest>().velocity;
+                    body.mass = 1f;
+                    body.AddForce(new Vector2(0,itemThrowForce));
+                    float impulse = (itemThrowAngularSpeed * Mathf.Deg2Rad) * body.inertia;
+                    body.AddTorque(impulse, ForceMode2D.Impulse);
+                    transform.parent.GetComponent<Blob>().grab = false;
+                }
+            }
             if(wentToZero && radian < startRadian) break;
 
             lastRadian = radian;
@@ -258,7 +278,7 @@ public class RopeControllerRealistic : MonoBehaviour
 
             //pos = pos + (vel + velFromForwardEuler) * 0.5f * t
             thisRopeSection.pos = allRopeSections[i].pos + (allRopeSections[i].vel + nextPosVelForwardEuler[i].vel) * 0.5f * timeStep;
-
+            if(isGoingRound) thisRopeSection.pos += transform.parent.GetComponent<GeometryTest>().velocity * timeStep/loopCount;
             //Save the new data in a temporarily list
             nextPosVelHeunsMethod.Add(thisRopeSection);
         }

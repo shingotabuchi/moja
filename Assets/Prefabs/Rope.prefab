@@ -183,8 +183,12 @@ MonoBehaviour:
   isGrabbing: 0
   isGoingRound: 0
   goingRoundRadius: 2
-  goingRoundForceCoeff: 60
-  goingRoundRadialForceCoeff: 50
-  itemGrabDist: 0.1
+  goingRoundForceCoeff: 30
+  goingRoundRadialForceCoeff: 30
+  itemGrabDist: 0.25
   itemToGrab: {fileID: 0}
   maxChangeDistSmall: 0.005
+  grabbingLoopCount: 50
+  eatingLoopCount: 50
+  itemThrowForce: 500
+  itemThrowAngularSpeed: 720
