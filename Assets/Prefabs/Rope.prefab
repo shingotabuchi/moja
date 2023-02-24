@@ -181,5 +181,10 @@ MonoBehaviour:
   maximumStretchIterations: 2
   grabAcceleration: 50
   isGrabbing: 0
+  isGoingRound: 0
+  goingRoundRadius: 2
+  goingRoundForceCoeff: 60
+  goingRoundRadialForceCoeff: 50
   itemGrabDist: 0.1
   itemToGrab: {fileID: 0}
+  maxChangeDistSmall: 0.005

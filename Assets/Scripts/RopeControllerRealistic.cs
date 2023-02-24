@@ -37,11 +37,19 @@ public class RopeControllerRealistic : MonoBehaviour
 
     public float grabAcceleration;
     public bool isGrabbing;
+    public bool isGoingRound;
+    public float goingRoundRadius = 2f;
+    public float goingRoundForceCoeff = 50f;
+    float goingRoundForce = 50f;
+    public float goingRoundRadialForceCoeff = 50f;
+    float goingRoundRadialForce = 50f;
     public float itemGrabDist;
     public Transform itemToGrab;
 
     float maxChangeDist = Mathf.Infinity;
     public float maxChangeDistSmall = 0.005f;
+    bool upperTurn;
+    Vector2 turnCenter;
     void Start() 
 	{
         //Init the line renderer we use to display the rope
@@ -96,6 +104,7 @@ public class RopeControllerRealistic : MonoBehaviour
         {
             if((allRopeSections[0].pos-(Vector2)item.position).sqrMagnitude < itemGrabDist*itemGrabDist)
             {
+                item.GetComponent<Rigidbody2D>().mass = 0;
                 whatIsHangingFromTheRope = item;
                 isGrabbing = false;
                 maxChangeDist = maxChangeDistSmall;
@@ -105,6 +114,59 @@ public class RopeControllerRealistic : MonoBehaviour
             }
             yield return new WaitForFixedUpdate();
         }
+    }
+
+    public IEnumerator GoRound()
+    {
+        isGoingRound = true;
+        upperTurn = false;
+        if(transform.parent.Find("UpperTurnCenter").position.y < transform.parent.Find("LowerTurnCenter").position.y)
+        {
+            turnCenter = (Vector2)transform.parent.Find("UpperTurnCenter").position;
+            upperTurn = true;
+        }
+        else turnCenter = (Vector2)transform.parent.Find("LowerTurnCenter").position;
+
+        Vector2 centerToMouth = (Vector2)transform.parent.Find("MouthPos").position - turnCenter;
+
+        float startRadius = (turnCenter - allRopeSections[0].pos).magnitude;
+        float endRadius = centerToMouth.magnitude;
+
+        Vector2 vecFromCenter = allRopeSections[0].pos - turnCenter;
+        Vector2 xVec = centerToMouth.normalized;
+        Vector2 yVec = new Vector2(-xVec.y,xVec.x);
+        if(upperTurn) yVec = new Vector2(xVec.y,-xVec.x);
+
+        float startRadian = Mathf.Atan2(Vector2.Dot(yVec,vecFromCenter),Vector2.Dot(xVec,vecFromCenter));
+        if(startRadian < 0)startRadian += 2f * Mathf.PI;
+        float katamuki = (startRadius - endRadius)/startRadian;
+        goingRoundRadius = startRadius;
+        goingRoundForce = goingRoundRadius*goingRoundForceCoeff;
+        goingRoundRadialForce = goingRoundRadius*goingRoundRadialForceCoeff;
+        bool wentToZero = false;
+        float lastRadian = startRadian;
+        while(true)
+        {
+            yield return new WaitForFixedUpdate();
+
+            centerToMouth = (Vector2)transform.parent.Find("MouthPos").position - turnCenter;
+
+            vecFromCenter = allRopeSections[0].pos - turnCenter;
+            xVec = centerToMouth.normalized;
+            yVec = new Vector2(-xVec.y,xVec.x);
+            if(upperTurn) yVec = new Vector2(xVec.y,-xVec.x);
+            float radian = Mathf.Atan2(Vector2.Dot(yVec,vecFromCenter),Vector2.Dot(xVec,vecFromCenter));
+            if(radian < 0)radian += 2f * Mathf.PI;
+
+            if(radian > lastRadian) wentToZero = true;
+            if(wentToZero && radian < startRadian) break;
+
+            lastRadian = radian;
+            goingRoundRadius = radian * katamuki + endRadius;
+            goingRoundForce = goingRoundRadius*goingRoundForceCoeff;
+            goingRoundRadialForce = goingRoundRadius*goingRoundRadialForceCoeff;
+        }
+        isGoingRound = false;
     }
 
     void FixedUpdate()
@@ -217,7 +279,7 @@ public class RopeControllerRealistic : MonoBehaviour
 
         //Implement maximum stretch to avoid numerical instabilities
         //May need to run the algorithm several times
-        if(!isGrabbing)
+        if(!isGrabbing && !isGoingRound)
         {
             for (int i = 0; i < maximumStretchIterations; i++)
             {
@@ -332,10 +394,21 @@ public class RopeControllerRealistic : MonoBehaviour
             //Calculate the acceleration a = F / m
             Vector2 acceleration = totalForce / springMass;
 
-            if(i==0 && isGrabbing)
+            if(i==0)
             {
-                acceleration += ((Vector2)itemToGrab.position - allRopeSections[0].pos).normalized * grabAcceleration;
+                if(isGrabbing) acceleration += ((Vector2)itemToGrab.position - allRopeSections[0].pos).normalized * grabAcceleration;
+                if(isGoingRound) 
+                {
+                    Vector2 vecFromCenter = (Vector2)blobCenter - allRopeSections[0].pos;
+                    Vector2 tangentialVec = new Vector2(-vecFromCenter.y,vecFromCenter.x);
+                    if(upperTurn) tangentialVec = new Vector2(vecFromCenter.y,-vecFromCenter.x);
+                    acceleration += tangentialVec.normalized * goingRoundForce;
+                    float radius = vecFromCenter.magnitude;
+                    if(radius > goingRoundRadius) acceleration += (vecFromCenter/radius) *  goingRoundRadialForce;
+                    if(radius < goingRoundRadius) acceleration -= (vecFromCenter/radius) *  goingRoundRadialForce;
+                }
             }
+
 
             accelerations.Add(acceleration);
         }

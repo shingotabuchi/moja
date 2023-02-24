@@ -91,6 +91,8 @@ public class GeometryTest : MonoBehaviour
             for (int i = 0; i < ropeCount; i++)
             {
                 ropes[i].loopCount = fastLoopCount;
+                // if(!ropes[i].isGoingRound) ropes[i].loopCount = fastLoopCount;
+                // else ropes[i].loopCount = slowLoopCount;
             }
             newRotZ = 180f*Mathf.Atan2(-forceDirection.x,forceDirection.y)/Mathf.PI-90;
         }
