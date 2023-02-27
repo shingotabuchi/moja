@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEditor;
+using UnityEngine.U2D;
 
 public class SquishyMesh : MonoBehaviour
 {
@@ -27,13 +28,38 @@ public class SquishyMesh : MonoBehaviour
     List<Vector3> dotPositions = new List<Vector3>();
     Mesh mesh;
     public Vector3 tailPosition;
+
+    public SpriteShapeController spriteShapeController;
+    Spline spline;
     void Start()
     {
+        spline = spriteShapeController.spline;
+        spline.Clear();
+        // for (int i = 0; i < lineRes; i++)
+        // {
+        //     spline.InsertPointAt(i, new Vector3(Mathf.Cos((2f*Mathf.PI*i)/lineRes),Mathf.Sin((2f*Mathf.PI*i)/lineRes),0));
+        // }
+        // spriteShapeController.RefreshSpriteShape();
         mesh = new Mesh();
         GetComponent<MeshFilter>().mesh = mesh;
     }
     void FixedUpdate()
     {
+
+        // for (int i = 0; i < allMembraneSegments.Count; i++)
+        // {
+        //     int j = allMembraneSegments.Count - i - 1;
+        //     GameObject membraneSegment = allMembraneSegments[j];
+        //     Vector3 position = membraneSegment.transform.position;
+        //     Quaternion rotation = membraneSegment.transform.rotation;
+
+        //     spline.InsertPointAt(i, position);
+        //     spline.SetTangentMode(i, ShapeTangentMode.Continuous);
+        //     spline.SetRightTangent(i, rotation * Vector3.down * tangentLength);
+        //     spline.SetLeftTangent(i, rotation * Vector3.up * tangentLength);
+        // }
+
+        // spriteShapeController.RefreshSpriteShape();
         for (int i = 1; i < modes; i++)
         {
             dModeCoeffs[i] += (-univGamma*dModeCoeffs[i] -univK*modeCoeffsK[i]*modeCoeffs[i] + univNoise*modeCoeffsNoise[i]*Random.Range(-1f,1f))*Time.deltaTime;
@@ -120,8 +146,16 @@ public class SquishyMesh : MonoBehaviour
         }
         List<Vector3> linePoints = new List<Vector3>();
         List<int> triangleList = new List<int>();
+        for (int i = dotPositions.Count; i < spline.GetPointCount(); i++)
+        {
+            spline.RemovePointAt(i);
+        }
+
         for (int i = 0; i < dotPositions.Count; i++)
         {
+            if(spline.GetPointCount() < i+1) spline.InsertPointAt(i,dotPositions[i]);
+            else spline.SetPosition(i,dotPositions[i]);
+
             if(i<dotPositions.Count-1)
             {
                 triangleList.Add(dotPositions.Count);
